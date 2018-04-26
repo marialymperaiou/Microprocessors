@@ -1,0 +1,39 @@
+	MVI A,10H
+    	STA 0B00H
+    	STA 0B01H
+    	STA 0B02H
+    	STA 0B03H
+    	STA 0B04H
+    	STA 0B05H
+START:
+	LDA 2000H	;input in A
+	MOV B,A	;B=A. how many open?
+	ANI 0FH	;A:4 lsb
+	MOV C,A	;C stores lsb
+	MOV A,B	;recover A
+	ANI F0H	;A:msb
+	RRC		;shift
+	RRC
+	RRC
+	RRC
+	ADD C		;A=A+C (msb+lsb)
+	MOV B,A	;B=A, B stores the sum
+	ANI F0H	;msb of sum
+	RRC		;shift
+	RRC
+	RRC
+	RRC
+	MOV C,A	;C stores shifted msb
+	MOV A,B	;recover A
+	ANI 0FH	;lsb
+	STA 0B00H	;show lsb
+	MOV A,C	;msb on A
+	STA 0B01H	;show one pos left
+	LXI D,0B00H
+	CALL STDM
+	CALL DCD
+	JMP START
+
+END
+
+	
