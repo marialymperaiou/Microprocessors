@@ -1,0 +1,134 @@
+include emu8086.inc
+org 100h
+
+main:
+PRINT "DECIMAL="  
+           
+                 
+        push ax
+        push bx
+        push cx
+        push dx
+        pusha
+        mov cx,4
+        mov dx,0          
+start:  mov ax,2   ;because we type the number from left
+        mul dx      ;to right we need to multiply by 10 in
+        mov dx,ax   ;order to create the value of the number
+ignore: mov ah,8
+        int 21h     ;waiting an input
+        cmp al,30h
+        jl ignore
+        cmp al,31h
+        jg ignore   ;accept only digits 0-9
+        mov ah,0eh
+        int 10h   
+        sub al,30h  ;change ASCII value to real value
+        mov ah,00h
+        add dx,ax   ;dx will have the number that we 
+        loop start  ;insert from keyborad in hex form
+        mov bx,dx   
+        
+        push ax
+        push dx
+        MOV AH,9            ;Change line.
+        MOV DX, offset msg3
+        INT 21H
+        pop dx
+        pop ax     
+        
+enter:
+        mov ah,8
+        int 21h     
+        cmp al,'q'
+        je telos
+        cmp al,'A'
+        je adding
+        cmp al,'E'
+        jne enter
+        dec dx
+        jmp cont
+adding: 
+        inc dx
+cont:
+        pop ax
+        
+                  
+        and dx,000fh
+        mov bx,dx  
+        
+        PRINT "METRHTHS="
+        
+            
+        push ax
+        push dx
+        MOV CX,0 
+        MOV AX,BX           ;!!!! BX had the number
+BCD:                    ;Start making the number decimal from hex.
+        MOV DX,0
+        DIV ten             ;Divide by 10,until you cannot do it anymore.
+        PUSH DX             
+        INC CX              ;Hold the number of digits.
+        CMP AX,0
+        JNE BCD
+        MOV DX,0
+BCD_DIG:
+        POP AX              ;Get in the reverse order the digits.
+        MOV DL,AL
+        cmp al,9
+        jg letter
+        ADD DL,30H
+        jmp print
+letter: add dl,55
+        
+print:          ;Transform them into correct ASCII codes.
+        MOV AH,2
+        INT 21H             ;Print them one by one digit.
+        LOOP BCD_DIG  
+        pop dx
+        pop ax 
+        
+        mov bx,ax  
+        push ax
+        mov al,' '
+        mov ah,0eh
+        int 10h      
+        mov ax,0
+        pop ax   
+        
+           
+        
+        push ax
+        push dx
+        MOV AH,9            ;Change line.
+        MOV DX, offset msg3
+        INT 21H
+        pop dx
+        pop ax   
+
+        
+        popa
+        pop dx
+        pop cx
+        pop bx
+        pop ax
+        jmp main
+        
+        
+        
+                    
+        
+        
+        
+        
+telos:         
+
+
+ret
+
+ 
+msg3 db 0ah,0dh,"$" 
+sixteen dw 0010H            ;Constant sixteen = 16.
+ten dw 000AH                ;Constant ten = 10.
+
+

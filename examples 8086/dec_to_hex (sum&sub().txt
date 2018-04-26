@@ -1,0 +1,170 @@
+include emu8086.inc
+org 100h
+
+main:
+  
+           
+                 
+        push ax
+        push bx
+        push cx
+        push dx
+        pusha 
+        
+        PRINT "DOSE 2 ARITHMOUS:"
+     
+        mov cx,2
+        mov bx,0        
+
+ignore: mov ah,8
+        int 21h     ;waiting an input
+        cmp al,'C'
+        je telos
+        cmp al,30h
+        jl ignore
+        cmp al,39h
+        jg ignore   ;accept only digits 0-9
+        mov ah,0eh
+        int 10h   
+        sub al,30h  ;change ASCII value to real value
+        rol bx,8
+        mov bl,al 
+        loop ignore  ;insert from keyborad in hex form 
+        
+        push ax
+enter:
+        mov ah,8
+        int 21h     
+        cmp al,'q'
+        je telos
+        cmp al,13
+        jne enter
+        pop ax
+           
+        push ax
+        push dx
+        MOV AH,9            ;Change line.
+        MOV DX, offset msg3
+        INT 21H
+        pop dx
+        pop ax   
+        
+        
+        push bx
+        
+        add bh,bl
+        
+        PRINT "ATHR="
+        push ax
+        push dx
+        mov bl,bh
+        mov bh,0
+        MOV CX,0 
+        MOV AX,BX           ;!!!! BX had the number
+BCD:                    ;Start making the number decimal from hex.
+        MOV DX,0
+        DIV sixteen             ;Divide by 10,until you cannot do it anymore.
+        PUSH DX             
+        INC CX              ;Hold the number of digits.
+        CMP AX,0
+        JNE BCD
+        MOV DX,0
+BCD_DIG:
+        POP AX              ;Get in the reverse order the digits.
+        MOV DL,AL
+        cmp al,9
+        jg letter
+        ADD DL,30H
+        jmp print
+letter: add dl,55
+        
+print:          ;Transform them into correct ASCII codes.
+        MOV AH,2
+        INT 21H             ;Print them one by one digit.
+        LOOP BCD_DIG  
+        pop dx
+        pop ax
+        
+        push ax
+        mov ah,0eh
+        mov al,' '
+        int 10h
+        pop ax
+              
+        pop bx
+        mov ah,0eh
+        PRINT "DIAF="
+        sub bh,bl
+        jns positive
+        mov al,'-'
+        int 10h
+        neg bh   
+positive:
+        mov bl,bh
+        mov bh,0 
+        
+        
+        MOV CX,0 
+        MOV AX,BX           ;!!!! BX had the number
+BCD1:                    ;Start making the number decimal from hex.
+        MOV DX,0
+        DIV sixteen             ;Divide by 10,until you cannot do it anymore.
+        PUSH DX             
+        INC CX              ;Hold the number of digits.
+        CMP AX,0
+        JNE BCD1
+        MOV DX,0
+BCD_DIG1:
+        POP AX              ;Get in the reverse order the digits.
+        MOV DL,AL
+        cmp al,9
+        jg letter1
+        ADD DL,30H
+        jmp print1
+letter1: add dl,55
+        
+print1:          ;Transform them into correct ASCII codes.
+        MOV AH,2
+        INT 21H             ;Print them one by one digit.
+        LOOP BCD_DIG1  
+        pop dx
+        pop ax   
+
+        
+        
+        
+        
+        push ax
+        push dx
+        MOV AH,9            ;Change line.
+        MOV DX, offset msg3
+        INT 21H
+        pop dx
+        pop ax
+         
+        
+        
+        
+       
+        
+        popa
+        pop dx
+        pop cx
+        pop bx
+        pop ax
+        jmp main
+                          
+        
+telos:        
+        
+         
+
+
+ret
+
+ 
+msg3 db 0ah,0dh,"$" 
+sixteen dw 0010H            ;Constant sixteen = 16.
+ten dw 000AH                ;Constant ten = 10.
+
+
