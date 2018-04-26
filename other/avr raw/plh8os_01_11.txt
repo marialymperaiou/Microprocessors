@@ -1,0 +1,56 @@
+ .include "m16def.inc"
+ .def temp = r16
+ .def plithos = r18
+ .def counter = r19
+	clr r24
+	out DDRA,r24
+	ser r24
+	out DDRB,r24
+	clr plithos
+
+
+	in temp, PINA
+
+	
+	lsl temp
+	inc counter
+	brcs one_read
+	brcc zero_read
+
+
+one_read:
+	cpi counter,8
+	breq end
+	lsl temp
+	inc counter
+	brcc zero_read
+	inc plithos
+	jmp one_read
+	
+
+
+
+zero_read:
+	cpi counter,8
+	breq end
+	lsl temp
+	inc counter
+	brcc zero_read
+	inc plithos
+	jmp one_read
+
+
+end:
+	clr counter
+loopa:
+	cpi plithos,0
+	breq print_
+	lsl counter
+	inc counter
+	dec plithos
+	jmp loopa
+print_:
+	out PORTB,counter
+
+
+

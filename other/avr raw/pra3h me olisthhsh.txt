@@ -1,0 +1,69 @@
+//Να γραφεί σε assembly AVR και να εκτελεστεί στον προσομοιωτή (AVR Studio)
+// του Μικροελεκτή Mega16 AVR πρόγραμμα που να εκτελεί τα εξής: 
+//Διαβάζει από την θύρα εισόδου PORTA έναν δυαδικό αριθμό 7bit Α6Α5Α4Α3Α2Α1Α0. 
+//Στη συνέχεια να υπολογίζει τον αριθμό Β=(Α6Α5Α4Α3Α2)*(2^Α1Α0) (ολίσθηση 0-3 φορές δηλαδή)
+// και τον εμφανίζει στη θύρα εξόδου PORTB. 
+//Για παράδειγμα, αν Α=1010011, τότε στη θύρα Β θα πρέπει να 
+//φαίνεται ο αριθμός Β=10100000. Υπενθυμίζεται ότι στον προσομοιωτή τα 
+//δεδομένα εισόδου/εξόδου είναι με θετική λογική και ότι
+// επειδή το πρόγραμμα θα είναι συνεχούς λειτουργίας, 
+//προκείμενου να παρατηρήσετε τις αλλαγές στην 
+//έξοδο ανάλογα με τις μεταβολές τις εισόδου, 
+//θα πρέπει να χρησιμοποιήσετε ένα breakpoint.
+
+.include "m16def.inc"
+ .def temp = r16
+ .def plithos = r18
+ .def counter = r19
+	clr r24
+	out DDRA,r24
+	ser r24
+	out DDRB,r24
+	clr plithos
+
+
+	in temp, PINA
+
+	
+	lsl temp
+	inc counter
+	brcs one_read
+	brcc zero_read
+
+
+one_read:
+	cpi counter,8
+	breq end
+	lsl temp
+	inc counter
+	brcc zero_read
+	inc plithosv
+	jmp one_read
+	
+
+
+
+zero_read:
+	cpi counter,8
+	breq end
+	lsl temp
+	inc counter
+	brcc zero_read
+	inc plithos
+	jmp one_read
+
+
+end:
+	clr counter
+loopa:
+	cpi plithos,0
+	breq print_
+	lsl counter
+	inc counter
+	dec plithos
+	jmp loopa
+print_:
+	out PORTB,counter
+
+
+

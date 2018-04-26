@@ -1,0 +1,38 @@
+;typonei dekadiko
+
+PRINT_DEC PROC NEAR
+;    PUSH AX
+;    PUSH BX
+;    PUSH CX
+;    PUSH DX
+    MOV AX,DX   ;Put number in AX
+    MOV BX,10   ;Put the divisor in BX
+    MOV CX,0    ;Counts the number of decimal digits
+AGAIN:
+    MOV DX,0
+    DIV BX      ;quotient in AX and remainder in DX
+    PUSH DX
+    INC CX
+    CMP AX,0    ;Check if quotient = 0 (all digits stored in stack)
+    JNE AGAIN
+PRINT_LOOP:
+    POP DX
+    ;CMP DL,9    ;i know that in char is something between 00000000 and 00001111
+    ;JBE DEC_DEC    ;if A<=9 jump to DEC_DEC
+    ;ADD DL,07H;we add total 37H, if we have something A-F
+DEC_DEC:
+    ADD DX,30H
+    MOV AH,02H
+    INT 21H        ;To print the DL
+    ;PRINT DL
+    CMP CX,04H
+    JL PPAASSPP:
+    PRINT 44 
+    PPAASSPP:
+    LOOP PRINT_LOOP
+;    POP DX
+;    POP CX
+;    POP BX
+;    POP AX   
+    RET
+PRINT_DEC ENDP

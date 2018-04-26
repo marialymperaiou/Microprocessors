@@ -1,0 +1,105 @@
+print macro char        
+        push dx
+        mov dl,char
+        mov ah,2
+        int 21h
+        pop dx
+endm
+
+print_str macro string           
+        push dx
+        lea dx,string
+        mov ah,9
+        int 21h
+        pop dx            
+endm
+                           
+read macro 
+    mov ah,1
+    int 21h
+endm  
+
+data segment
+    MSG1    DB  0AH,0DH,'GIVE A 10-BIT BINARY NUMBER:$'
+    MSG2    DB  0AH,0DH,'DECIMAL:$'
+    pkey db "press any key...$"
+ends
+
+stack segment
+    dw   128  dup(0)
+ends
+
+code segment
+start:
+; set segment registers:
+    mov ax, data
+    mov ds, ax
+    mov es, ax
+
+; add your code here            
+repeat: 
+    print_str MSG1
+    
+    mov dx,0000h
+    mov cx,10d      ;number of binary bigits to be read
+read_10:
+    call read_bin
+    cmp al,'q'
+    je quit
+    add dl,al
+    shl dx,1
+    loop read_10
+   
+    shr dx,1
+     
+    ;10 digit binary number in DX
+    
+    
+    push dx
+    
+    print_str MSG2 
+    
+    pop dx
+    
+    call print_bcd   
+    
+    jmp repeat
+    
+quit:
+    mov ax, 4c00h ; exit to operating system.
+    int 21h     
+    
+read_bin proc near
+ignore:
+    read
+    cmp al,'q'
+    je bye
+    cmp al,30h
+    jl ignore
+    cmp al,31h
+    jg ignore    
+    sub al,30h
+bye: ret        
+
+print_bcd proc near
+    mov cx,0
+    mov ax,dx
+addr2:
+    mov dx,0
+    mov bx,10
+    div bx
+    push dx
+    inc cx
+    cmp ax,0
+    jnz addr2
+addr3:
+    pop dx
+    add dx,30h
+    print dl
+    loop addr3
+    ret
+
+      
+ends
+
+end start ; set entry point and stop the assembler.      

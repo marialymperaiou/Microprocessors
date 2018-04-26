@@ -1,0 +1,62 @@
+;STON CX LEW POSA PSIFIA 8ELW .TORA DIAVAZEI 1!!!!
+
+
+
+
+HEX_IN PROC NEAR
+    MOV DX,0
+   MOV BH,0
+    MOV CX,1		;ALLAGI AN 2 H 3 PSIFIA
+IGNORE:  
+    READ           ;Read changes AX: puts input in AL and gives DOS function code with AH
+    CMP AL,'T'
+    JE EXODOS
+    CMP AL,'t'
+    JE EXODOS
+    CMP AL,30H
+    JL IGNORE
+    CMP AL,39H
+    JLE PASS1       ;If we pass we have accepted value
+    CMP AL,41H
+    JL IGNORE
+    CMP AL,46H
+    JLE PASS2
+    CMP AL,61H
+    JL IGNORE
+    CMP AL,66H
+    JLE PASS3
+    JMP IGNORE
+    PASS1:
+    PRINT AL        ;We have read withouth echo
+    SUB AL,30H      ;AX<-(0-9)
+    MOV BL,AL        ;BX<-00000000 (AL) the new decimal digit
+    MOV AX,DX        ;put the number in AX
+    MOV DX,16        ;DX<-10 multiplier
+    MUL DX            ;AX*DX : Result is returned to DX-AX, but it can't be >9999, so it fits in AX
+    MOV DX,AX
+    ADD DX,BX        ;Add NEW digit
+    LOOP IGNORE 
+    RET
+    PASS2:
+    PRINT AL
+    SUB AL,55
+    MOV BL,AL        ;BX<-00000000 (AL) the new decimal digit
+    MOV AX,DX        ;put the number in AX
+    MOV DX,16        ;DX<-10 multiplier
+    MUL DX            ;AX*DX : Result is returned to DX-AX, but it can't be >9999, so it fits in AX
+    MOV DX,AX
+    ADD DX,BX        ;Add NEW digit
+    LOOP IGNORE   
+    RET
+    PASS3:
+    PRINT AL
+    SUB AL,87      ;AX<-(0-9)
+    MOV BL,AL        ;BX<-00000000 (AL) the new decimal digit
+    MOV AX,DX        ;put the number in AX
+    MOV DX,16        ;DX<-10 multiplier
+    MUL DX            ;AX*DX : Result is returned to DX-AX, but it can't be >9999, so it fits in AX
+    MOV DX,AX
+    ADD DX,BX        ;Add NEW digit
+    LOOP IGNORE
+    RET               ;Finally we have the number in DX
+HEX_IN ENDP

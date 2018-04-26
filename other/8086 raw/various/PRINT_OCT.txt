@@ -1,0 +1,39 @@
+
+;!!!!!APO TON DL !!!!!
+
+PRINT_OCT PROC NEAR
+    PUSH AX
+    PUSH BX
+    PUSH CX
+    PUSH DX
+    MOV AX,DX   ;Put number in AX
+    MOV BX,8   ;Put the divisor in BX
+    MOV CX,0    ;Counts the number of decimal digits
+AGAIN2:
+    MOV DX,0
+    DIV BX      ;quotient in AX and remainder in DX
+    PUSH DX
+    INC CX
+    CMP AX,0    ;Check if quotient = 0 (all digits stored in stack)
+    JNE AGAIN2
+PRINT_LOOP2:
+    POP DX
+    CMP DL,9    ;i know that in char is something between 00000000 and 00001111
+    JBE DEC_DEC2    ;if A<=9 jump to DEC_DEC
+    ADD DL,07H;we add total 37H, if we have something A-F
+DEC_DEC2:
+    ADD DX,30H
+    MOV AH,02H
+    INT 21H        ;To print the DL
+
+    CMP CX,04H
+    JL PPAASSPP2
+    PRINT 44 
+    PPAASSPP2:
+    LOOP PRINT_LOOP2
+    POP DX
+    POP CX
+    POP BX
+    POP AX   
+    RET
+PRINT_OCT ENDP
