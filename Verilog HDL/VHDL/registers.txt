@@ -1,0 +1,45 @@
+library IEEE;
+use IEEE.std_logic_1164.all;
+
+package register_decls is
+	type register_file_type is
+			array (0 to 15) of std_logic_vector(31 downto 0);
+	subtype address is integer range 0 to 15;
+end package;
+library IEEE;
+use IEEE.std_logic_1164.all;
+use work.register_decls.all;
+
+entity register_file is
+	port (read_data_bus: out std_logic_vector(31 downto 0);
+		write_data_bus: in std_logic_vector(31 downto 0);
+		read_address_bus, write_address_bus: in address;
+		w_enable: in std_logic);
+end register_file;
+architecture behavioral of register_file is
+	signal register_data: register_file_type :=((others=>'0'),
+												(others=>'0'),
+												(others=>'0'),
+												(others=>'0'),
+												(others=>'0'),
+												(others=>'0'),
+												(others=>'0'),
+												(others=>'0'),
+												(others=>'0'),
+												(others=>'0'),
+												(others=>'0'),
+												(others=>'0'),
+												(others=>'0'),
+												(others=>'0'),
+												(others=>'0'),
+												(others=>'0'));
+begin
+	process (read_address_bus, write_address_bus, w_enable) is
+		begin
+			if (w_enable='1') then
+				register_data(write_address_bus)<=write_data_bus;
+			else
+				read_data_bus<=register_data(read_address_bus);
+		end if;
+	end process;
+end behavioral;

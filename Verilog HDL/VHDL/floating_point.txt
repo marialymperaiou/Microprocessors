@@ -1,0 +1,18 @@
+entity alu is
+	port (x,y: in real;
+		z: out real;
+		f0,f1: in bit);
+end alu;
+architecture behavioral of alu is
+	begin
+		process (x,y,f0,f1) is
+			begin
+				case bit_vector'(f1,f0) is
+					when "00" => z<=x+y;
+					when "01" => z<=x-y;
+					when "10" => z<=x*y;
+					when "11" => z<=x/y;
+					when others => null;
+				end case;
+		end process;
+	end behavioral;
