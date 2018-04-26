@@ -1,0 +1,111 @@
+#include <avr/io.h>
+int main() {
+	char a, b, c, d, e, F0, F1, F2, Fout, input;
+	DDRA = 0x00; //configure PORTA as input
+	DDRC = 0xff; //configure PORTC as output
+	Fout =0;
+	while(1)
+	{
+		input = PINA; // input from PINA
+		a = input%2; // use (input)mod2 to aqcuire the LDB
+		input = input>>1; //shift right and repeat procedure to get all input
+		b = input%2;
+		input = input>>1;
+		c = input%2;
+		input = input>>1;
+		d = input%2;
+		input = input>>1;
+		e = input%2;
+		input = input>>1;
+		F0 = ((a&b&c)|(c&d) |(d&e));
+		if (F0==0) F0 = 1; //complement fo
+		else F0=0;
+		if (e==0) e=1; //complement e
+		else e=0;
+		F1 = ((a&b) | (c&d&e));
+		F2 = (F0 |F1);
+		Fout=(128*F0) |(64*F1) |(32*F2); //show F0 at PC7, F1 at PC6 and F2 at PC5
+		PORTC = Fout; //output at PORTC
+	}
+	return 0;
+}
+
+
+
+
+#include <avr/io.h>
+unsigned char ror(unsigned char num,unsigned char n)
+/*function to shift a number n spots right with carry*/
+{
+	unsigned char i,temp,j;
+	for(j=0;j<n;j++){
+		temp=num;
+		i=(temp & 0x01);
+		num=num>>1;
+		if (i==0x01) num=num+ 0x80;
+	}
+	return num;
+}
+unsigned char rol(unsigned char num,unsigned char n)
+/*function to shift a number n spots left with carry*/
+{
+	unsigned char i,temp,j;
+	for(j=0;j<n;j++){
+		temp=num;
+		i=(temp & 0x80);
+		num=num<<1;
+		if(i==0x80) num=num+ 0x01;
+	}
+	return num;
+}
+int main(void)
+{
+	unsigned char i,temp,prev=0,in=0;
+	DDRB=0xFF; //set PortD as input
+	DDRD=0x00; //set PortB as output
+	PORTB=0x80; //turn on led7
+	temp=0x80; //initialize temp which shows the led
+	//which is on
+	while(1)
+	{
+		prev=in; //previous input
+		i=PIND; //check input
+		in=i;
+		if ((i& 0x10)==0&& (prev& 0x10)==0x10)
+		/*check if SW4 is pushed*/
+		{
+			temp=0x80;
+			PORTB=temp;
+			/*move led to his initial position*/
+		}
+		else if ((i& 0x08)==0 && (prev& 0x08)==0x08)
+		/*check if SW3 is pushed*/
+		{
+			temp=rol(temp,2);
+			/*move led 2 spots left*/
+			PORTB=temp;
+		}
+		else if ((i& 0x04)==0 && (prev& 0x04)==0x04)
+		/*check if SW2 is pushed*/
+		{
+			temp=ror(temp,2);
+			/*move led 2 spots right*/
+			PORTB=temp;
+		}
+		else if ((i& 0x02)==0 && (prev& 0x02)==0x02)
+		/*check if SW1 is pushed*/
+		{
+			temp=rol(temp,1);
+			/*move led 1 spot left*/
+			PORTB=temp;
+		}
+		else if ((i& 0x01)==0 && (prev& 0x01)==0x01)
+		/*check if SW0 is pushed*/
+		{
+			temp=ror(temp,1);
+			/*move led 1 spot right*/
+			PORTB=temp;
+		}
+	}
+	return 1;
+}

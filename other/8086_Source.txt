@@ -1,0 +1,424 @@
+
+; Reads a character, and returns its ascii code on AL
+; Uses AH, AL
+READ_CHAR MACRO   
+    MOV AH,8
+    INT 21H
+ENDM 
+
+; Prints the argument string
+; Uses DX, AH
+PRINT_STR MACRO STRING
+    MOV DX,OFFSET STRING
+    MOV AH,9
+    INT 21H 
+ENDM    
+
+; Prints the argument string followed by a new line 
+; -- WARNING -- : New line has to be initialised as seen below
+print_msg macro string
+	print_str string
+	print_str newline
+endm
+
+; Prints the argument char that is in ascii code
+; Uses DL, AH
+PRINT MACRO CHAR
+    MOV DL,CHAR
+    MOV AH,2H
+    INT 21H
+ENDM
+
+; Prints an array that is in ascii code
+; Uses BX, CX, DL, AH
+PRINT_ARRAY MACRO ARRAY, INDEXR
+    LOCAL CHECKNEXT, EXIT_PRINT_ARRAY
+    MOV BX,OFFSET ARRAY
+    MOV CX,00H
+    MOV CL,INDEXR             ;CL=COUNTER OF STORE ARRAY
+    CMP CL,00H                ;IF CL IS ZERO THEN YOU DONT HAVE TO PRINT ANYTHING
+    JZ EXIT_PRINT_ARRAY 
+CHECKNEXT:  
+    MOV DL,[BX]
+    PRINT DL                    ;PRINT THE CHECKING CELL
+    INC BX                      ;SHOW TO THE NEXT CELL
+    LOOP CHECKNEXT              ;DO THAT FOR THE WHOLE ARRAY
+EXIT_PRINT_ARRAY:
+ENDM
+
+; Prints a number that is in ascii code in an array but doesnt keep the leading zeroes
+; -- WARNING -- If for some reason we want the leading zeroes just print the array
+; Uses CX, BX, DX
+print_num_result macro array index
+    local zero, loopa, cont
+    push cx
+    mov bx, offset array
+    mov cx, 00h
+    mov cl, index
+    add cx, bx
+    mov dl, [bx]
+    inc bl
+    cmp dl, '0'
+    je zero
+loopa:
+    cmp bl, cl
+    jz cont
+    print dl
+    mov dl,[bx]
+    inc bl
+    cmp bl, cl
+    jnz loopa
+    jmp cont
+        
+zero:
+    mov dl,[bx]
+    inc bl
+    cmp dl, '0'
+    jnz loopa
+    cmp bl, cl
+    jnz zero
+
+cont:
+    print dl
+    pop cx    
+endm
+
+
+
+; Adds an element to the array,
+; Input AL , we consider that AL has the wanted value
+; Uses BX, DX, AL
+update_orisma macro orisma index    ; Updates one number
+    push bx
+    push dx
+    mov bx, offset orisma
+    mov dl, index
+    mov dh, 00h
+    add bx, dx
+    mov [bx], al
+    inc index
+    pop dx
+    pop bx
+endm
+
+; Converts an ascii code hex digit to its numeric value
+; Input AL the ascii code of a hex digit
+; Uses AL
+convert_ascii_to_hex macro          ; Initial in al, result in al
+    local number, letter, cont
+    cmp al, '9'
+    jle number
+    cmp al, 'A'
+    jge letter
+number:
+    sub al, 30h
+    jmp cont
+letter:
+    sub al, 37h
+cont:
+endm   
+
+; Converts a hex digit to its ascii code
+; Input AL a hex digit
+; Uses AL
+convert_hex_to_ascii macro          ; Initial in al, result in al
+    local number, letter, cont
+    cmp al, 09h
+    jle number
+    jmp letter
+number:
+    add al, 30h
+    jmp cont
+letter:
+    add al, 37h
+cont:
+endm 
+
+; Coverts a hex value to the ascii decimal and stores it in the result array
+; --WARNING-- Maximum 4 digits decimal 
+; --WARNING-- IT CANT BE USED AS A MACRO SO YOU HAVE TO RENAME THE RESULT AND INDEX NAME
+; Input AX = the hex value7
+; Uses DX, BX, AX
+convert_hex_to_decimal:
+	mov dx, 0000h
+	mov bx, 03e8h      ; 1000
+    div bx
+    convert_hex_to_ascii
+    update_orisma dec_result indexd
+    mov ax, dx
+    mov dx, 0000h
+    mov bx, 064h      ; 100
+    div bx
+    convert_hex_to_ascii
+    update_orisma dec_result indexd
+    mov ax, dx
+    mov dx, 0000h
+    mov bx, 0ah      ; 10
+    div bx
+    convert_hex_to_ascii
+    update_orisma dec_result indexd
+    mov ax, dx
+    convert_hex_to_ascii
+    update_orisma dec_result indexd
+
+
+
+; Coverts a hex value to the ascii binary and stores it in the result array
+; --WARNING-- Maximum 8 digits binary     
+; --WARNING-- IT CANT BE USED AS A MACRO SO YOU HAVE TO RENAME THE RESULT AND INDEX NAME
+; Input AX = the hex value7
+; Uses DX, BX, AX
+convert_hex_to_binary:
+	mov dx, 0000h
+	mov bx, 0080h      ; 1000000b
+    div bx
+    convert_hex_to_ascii
+    update_orisma bin_result indexb
+    mov ax, dx
+    mov dx, 0000h
+    mov bx, 0040h      ; 01000000b
+    div bx
+    convert_hex_to_ascii
+    update_orisma bin_result indexb
+	mov ax, dx
+    mov dx, 0000h
+    mov bx, 0020h      ; 00100000b
+    div bx
+    convert_hex_to_ascii
+    update_orisma bin_result indexb
+	mov ax, dx
+    mov dx, 0000h
+    mov bx, 0010h      ; 00010000b
+    div bx
+    convert_hex_to_ascii
+    update_orisma bin_result indexb
+	mov ax, dx
+    mov dx, 0000h
+    mov bx, 0008h      ; 00001000b
+    div bx
+    convert_hex_to_ascii
+    update_orisma bin_result indexb
+	mov ax, dx
+    mov dx, 0000h
+    mov bx, 0004h      ; 00000100b
+    div bx
+    convert_hex_to_ascii
+    update_orisma bin_result indexb
+	mov ax, dx
+    mov dx, 0000h
+    mov bx, 0002h      ; 00000010b
+    div bx
+    convert_hex_to_ascii
+    update_orisma bin_result indexb
+    mov ax, dx
+    convert_hex_to_ascii
+    update_orisma bin_result indexb
+
+
+;;K
+;====================================================================================
+;This is the main code part that we always have to have
+data segment
+    orisma1 db "000"
+    index1 db 0    
+    bin_result db "00000000"
+    dec_result db "0000"
+    indexb db 0
+    indexd db 0
+    start_message db 07h, "Program Start: AMAZING CALCULATOR",07h, 24h
+    newline db 0ah,0dh,24h
+    equal_sign db '='
+data ends
+
+
+code segment
+    assume cs:code, ds:data
+    
+main proc far
+    ;We have to push the registers that we are going to use in the program
+    mov ax, data
+    mov ds, ax
+	
+start:
+    print_msg start_message
+    mov index1, 00h         ;Indexes initialize 
+
+    
+
+main endp
+code ends
+end main
+;====================================================================================
+
+
+
+
+;;T
+;========================8086 LIB========================================
+
+;=====================INITIALIZERS=======================================
+DATA SEGMENT 
+    BUFFER DB "01234567890123456789"  ;BUFFER HAS 20 CELLS
+    WELC DB "PLEASE INSERT 20 CHARS a-z OR ANY DECIMAL DIGITS",0AH,0DH,'$' 
+    MSG DB "YOU INSERTED $"
+    NEWLINE DB 0AH,0DH,'$'
+DATA ENDS
+
+CODE SEGMENT 
+    ASSUME CS:CODE,DS:DATA 
+   
+MAIN PROC FAR
+
+        MOV AX,DATA
+        MOV DS,AX 
+ 
+START:
+
+;-----------------------MAIN PROG----------------------
+
+EXIT:   JMP START
+        MAIN ENDP    
+
+;------------------------OTHER PROCS----------------------
+
+CODE ENDS
+END MAIN
+
+;========================PRINTING READING CONVERTING==========================
+READ_DEC PROC NEAR 
+    READ
+    CMP AL,30H
+    JL  ERROR
+    CMP AL,39H
+    JG  ERROR 
+    MOV BH,AL   ;SAVE THE FIRST DIGIT IF ITS DECIMAL DIGIT 
+    SUB BH,30H  ;TAKE THE REAL VALUE
+    RET
+READ_DEC ENDP 
+
+PRINT_DEC PROC NEAR
+            MOV DL,BL    ;DL HAS NOW THE 2 DIGITS
+            AND DL,0F0H  ;MASK THE 4 MSBS ITS ONE HEX DIGIT
+            ROR DL,1     ;TAKE THEM TO THE LSBS 
+            ROR DL,1
+            ROR DL,1
+            ROR DL,1
+            CMP DL,0    ;IF FIRST DIGIT IS ZERO DONT SHOW
+            JZ NEXT_DEC
+            ADD DL,30H
+            MOV AH,2
+            INT 21H 
+NEXT_DEC:    
+            MOV DL,BL   ;AL<-NUMBER
+            AND DL,0FH  ;MASK THE 4 LSBS ITS ONE HEX DIGIT
+            ADD DL,30H
+            MOV AH,2
+            INT 21H 
+            RET
+PRINT_DEC ENDP
+
+DEC_TO_HEX PROC NEAR
+    MOV AL,0AH   ;A = 10 DEC
+    MOV DL,BL    ;DL<-NUMBER
+    AND DL,0F0H  ;MASK THE 4 MSBS ITS ONE DEC DIGIT
+    ROR DL,1     ;TAKE THEM TO THE LSBS 
+    ROR DL,1
+    ROR DL,1
+    ROR DL,1      
+    MUL DL    ;AL = DIG1 * 10
+    MOV DL,BL    ;DL<-NUMBER
+    AND DL,0FH   ;MASK THE 4 LSBS ITS ONE DEC DIGIT
+    ADD DL,AL    ;DL = DIG1 * 10 + DIG2
+    
+    MOV DH,DL    ;SAVE THE NUMBER IN HEX FORM
+    RET
+DEC_TO_HEX ENDP    
+
+PRINT_HEX PROC NEAR 
+    CALL DEC_TO_HEX ;DEC_TO_HEX RETURNS IN HEX FORM THE NUMBER OF BL IN REG DH
+    MOV DL,DH    ;DL = NUMBER IN HEX
+    AND DL,0F0H  ;MASK THE 4 MSBS ITS ONE HEX DIGIT
+    ROR DL,1     ;TAKE THEM TO THE LSBS 
+    ROR DL,1
+    ROR DL,1
+    ROR DL,1   
+    CMP DL,0     ;IF FIRST DIGIT IS ZERO DONT SHOW
+    JZ  NEXT_HEX
+    CMP DL,9     ;IF DIGIT IS <9 THEN ASCII CODE IS DIGIT + 30H
+    JG  ABOVE9
+    ADD DL,30H
+    JMP PRINT_IT
+
+ABOVE9: 
+    ADD DL,37H  ;IF DIGIT IS>9 THEN ASCII CODE IS DIGIT + 37H
+PRINT_IT:
+    MOV AH,2
+    INT 21H 
+
+NEXT_HEX:    
+    MOV DL,DH   ;DL<-NUMBER
+    AND DL,0FH  ;MASK THE 4 LSBS ITS ONE HEX DIGIT
+    CMP DL,9    ;IF DIGIT IS <9 THEN ASCII CODE IS DIGIT + 30H
+    JG  TABOVE9
+    ADD DL,30H
+    JMP TPRINT_IT  
+  
+TABOVE9: 
+    ADD DL,37H  ;IF DIGIT IS>9 THEN ASCII CODE IS DIGIT + 37H
+TPRINT_IT:
+    MOV AH,2
+    INT 21H 
+    RET
+PRINT_HEX ENDP
+
+PRINT_OCT PROC NEAR
+        CALL DEC_TO_HEX ;WE HAVE IN DH THE NUMBER IN HEX FORM
+        MOV CL,2H
+        MOV CH,0H    ;CH = FLAG IF ITS 0 THEN PREVIOUS DIGIT WAS ZERO
+OCTAL1: MOV DL,DH    ;DL = NUMBER IN HEX
+        ROL DL,CL     ;TAKE THEM TO THE LSBS
+        AND DL,03H   ;MASK THE 2 LSBS ITS THE FIRST ONE OCT DIGIT
+        ADD CL,3H    ;NEXT LOOP IS 3 SHIFTS MORE  
+        CMP DL,0     ;IF FIRST DIGIT IS ZERO DONT SHOW 
+        JZ  OCTAL2   
+        MOV CH,01H   ;IF FIRST IS NON ZERO THEN CHANGE FLAG
+        ADD DL,30H   ;PRINT DIGIT
+        MOV AH,2
+        INT 21H  
+        
+OCTAL2: 
+        MOV DL,DH    ;DL = NUMBER IN HEX
+        ROL DL,CL     ;TAKE THEM TO THE LSBS
+        AND DL,07H  ;MASK THE 3 LSBS ITS ONE OCT DIGIT
+        CMP CH,0H    ;IF FIRST DIG <> 0 THEN PRINT THE SECOND
+        JNZ PRINTO   
+        CMP DL,0     ;IF FIRST AND SECOND DIGIT IS ZERO DONT SHOW
+        JZ  OCTAL3
+PRINTO: ADD DL,30H   ;PRINT DIGIT
+        MOV AH,2
+        INT 21H 
+        
+OCTAL3: MOV DL,DH    ;DL = NUMBER IN HEX
+        AND DL,07H  ;MASK THE 3 LSBS ITS ONE OCT DIGIT
+        ADD DL,30H   ;PRINT DIGIT
+        MOV AH,2
+        INT 21H
+        RET
+PRINT_OCT ENDP
+
+PRINT_BIN PROC NEAR
+        CALL DEC_TO_HEX ;DH HAS THE NUMBER WE JUST PRINT ALL THE DIGITS
+        MOV CL,8H       ;COUNTER
+LOOPA:  MOV DL,DH       ;TAKE THE NUMBER
+        ROR DL,CL       ;SHIFT RIGHT SO WE GET IN CARRY THE MSB THAT WE
+        JC PRINT1
+        PRINT '0' 
+        JMP AGAIN
+PRINT1: PRINT '1'
+AGAIN:  SUB CL,1H
+        JNZ LOOPA        
+   
+        RET
+PRINT_BIN ENDP
+;===============================================================================
+

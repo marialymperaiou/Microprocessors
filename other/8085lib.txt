@@ -1,0 +1,403 @@
+;=======================================8085 LIBRARY====================================
+
+;===============================READ TO A
+LDA 2000H
+
+;===============================OUT FROM A
+CMA
+STA 3000H
+
+;=====================delay routine H-L has the base and through BC
+
+	LXI H,00C8H 	;base
+	MVI C,64H
+	MVI B,00H	;offset
+
+MAKE_DELAY: 
+	CPI 00H
+	JZ END_2
+	DAD B
+	DCR A
+	JMP START_2
+
+CALL DELB
+
+;=======================INSTALL INTERRUPTS=========================
+
+;==============rst 6.5
+MVI A,0DH
+SIM
+EI
+
+;Den xris
+;==============RST 5.5
+MVI A,0EH
+SIM
+EI
+
+;===================INTERRUPTS ROUTINES===========================
+INTR_ROUTINE:
+
+    	DI ;Disable Interrupts
+    	PUSH PSW ;Push registers
+    	PUSH H
+    PUSH B
+	LXI B,0032H
+ 	CALL DELB ;PERIMENE GIA THN DEYTERH DIAKOPH 50MS
+
+	RIM
+	RAL 
+	RAL 
+	ANI 80H
+	CPI 00H 
+	JNZ INTR_EXIT
+;---------------
+;ENTER CODE HERE
+;---------------
+
+INTR_EXIT:
+
+    POP B ; Pop registers
+    POP H
+    POP PSW
+    EI ;Enable Interrupts & Return
+RET
+;-------------------------
+
+;================================READ KEYBOARD========================
+
+  CALL KIND       ;stores code in A - changes register A
+;-------------------------
+
+;===============================INITIALIZE 7SEG===========================
+;Display in 7-segment (88 pdf)
+
+DISPLAY:
+    PUSH PSW
+    MVI A,10H       ;code for void symbol
+
+    STA 0B00H       ;LSB of 7-segment
+    MVI A,10H       ;code for void symbol
+
+    STA 0B01H
+    MVI A,10H       ;code for void symbol
+
+    STA 0B02H
+    MVI A,10H       ;code for void symbol
+
+    STA 0B03H
+    MVI A,10H       ;code for void symbol
+
+    STA 0B04H
+    MVI A,10H       ;code for void symbol
+
+    STA 0B05H       ;MSB of 7-segment
+
+    LXI D,0B00H     ;Set memory address for STDM
+
+    CALL STDM       ;Move message to 7-segment  - Changes all registers!
+
+    CALL DCD        ;Display it. - No registers are changed
+
+POP PSW
+
+    JMP DISPLAY     ;Need to refresh the display continuously
+;-------------------------
+
+;-------------------------
+;ektupwsi stin othoni se dekaexadiki morfi ton A
+PH_DISPLAY:
+
+    PUSH PSW
+    ANI 0FH
+    STA 0B00H       ;LSB of 7-segment
+    POP PSW
+    PUSH PSW
+    ANI F0H
+    RAR
+    RAR
+    RAR
+    RAR
+
+    STA 0B01H
+    MVI A,10H       ;code for void symbol
+
+    STA 0B02H
+    MVI A,10H       ;code for void symbol
+
+    STA 0B03H
+    MVI A,10H       ;code for void symbol
+
+    STA 0B04H
+    MVI A,10H       ;code for void symbol
+
+    STA 0B05H       ;MSB of 7-segment
+
+    LXI D,0B00H     ;Set memory address for STDM
+
+    CALL STDM       ;Move message to 7-segment  - Changes all registers!
+
+    CALL DCD        ;Display it. - No registers are changed
+    POP PSW
+
+    JMP PH_DISPLAY     ;Need to refresh the display continuously
+;-------------------------
+
+
+;-------------------------
+;xwrismos dekaexadikou(A) se monades(A), dekades(B), ekatontades(C) (ews FFH)
+
+MVI B,00H
+MVI C,00H
+XD_HUNDRED:
+    CPI 64H
+    JC XD_DEC
+    INR C
+    SUI 64H
+    JMP XD_HUNDRED
+
+XD_DEC:
+    CPI 0AH
+    JC XD_CONT
+    INR B
+    SUI 0AH
+    JMP XD_DEC
+
+XD_CONT:
+
+;-------------------------
+
+
+;-------------------------
+;ektupwsi stin othoni se dekadiki morfi ton A(monades), B(dekades), C(ekatontades)
+PD_DISPLAY:
+
+    STA 0B00H       ;LSB of 7-segment
+    MOV A,B
+    STA 0B01H
+    MOV A,C
+    STA 0B02H
+    MVI A,10H       ;code for void symbol
+
+    STA 0B03H
+    MVI A,10H       ;code for void symbol
+
+    STA 0B04H
+    MVI A,10H       ;code for void symbol
+
+    STA 0B05H       ;MSB of 7-segment
+
+    LXI D,0B00H     ;Set memory address for STDM
+
+    CALL STDM       ;Move message to 7-segment  - Changes all registers!
+
+    CALL DCD        ;Display it. - No registers are changed
+
+    JMP PD_DISPLAY     ;Need to refresh the display continuously
+;-------------------------
+
+;========================PRAKSEIS ME PROSHMASMENOUS==============================
+LDA 2000H ;Read the input
+		MOV D,A	;SAVE INPUT IN D
+		RAL		;CHECK MSB IF NUMBER IS NEG
+		JNC	POSITIVE	;IF MSB IS 0 THEN POSITIVE
+
+NEGATIVE:	MOV A,D   ;PARE PALI THN EISODO
+		CMA       ;COMPLEMENT OF 1
+		ADI 01H   ;COMPLEMENT OF 2
+		MOV D,A	;SAVE RIGHT OUTPUT
+		MVI A,1CH ;A= CODE OF "-"
+		STA 0A03H		;PUT IT IN THE 4TH DISPLAY
+		JMP SIGNOK
+
+POSITIVE: MVI A,10H ;A= CODE OF " " NONE OUTPUT
+		STA 0A03H		;PUT IT IN THE 4TH DISPLAY
+
+SIGNOK:	MOV A,D	;NOW WE HAVE TO SHOW THE NUMBER
+		CPI 64H   ; NUM < 100 => CARRY BECOMES 1
+		JC LESS100
+
+GR100:   	MVI A,01H  ;CODE OF 1 dec IN HUNDREADS
+		STA 0A02H  ;SHOW IT
+		MOV A,D	;TAKE THE NUMBER AGAIN
+		SUI 64H    ;NUMBER = NUMBER - 100
+		MOV D,A 	;SAVE THE NUMBER
+		JMP HUNOK
+
+LESS100: 	MVI A,00H  ;CODE OF 0 dec IN HUNDREADS
+		STA 0A02H  ;SHOW IT
+
+HUNOK:	MOV A,D   ;NOW WE CARE ONLY FOR DEC AND UNITS
+		MVI B,00H	 ;DECADES = 0
+FINDDEC:	CPI 0AH 	;IF NUM < 10 THEN CARRY BECOMES 1
+		JC DECUNITSOK
+		
+		INR B	;DEC ++
+		SUI 0AH ;NUM = NUM -10
+		JMP FINDDEC
+
+DECUNITSOK: 
+		MOV D,A	;A HAS THE UNITS NOW		
+		MOV A,B	;A=DECADES
+		STA 0A01H	;SHOW TO THE RIGHT PLACE
+		MOV A,D	;TAKE THE UNITS
+		STA 0A00H	;SHOW IT
+		
+		LXI D,0A00H
+		CALL STDM		;USE THE DISPLAY ROUTINES
+		CALL DCD
+		RET
+;==================================================================
+
+;=================MOD NUMBER X STO A===============================
+	MOV D,A ;SAVE NUMBER IN D
+	MVI C, 00H
+MOD_LOOP:
+	CPI A,X
+	JC MOD_RESULT
+	SUI X
+	INR C
+	JMP MOD_LOOP
+MOD_RESULT:
+	;A HAS THE MOD RESULT AND C IS THE DIV RESULT
+;=================================================================
+
+;=======================COMPUTER ME MULTIPLICATION KAI HEX TO DEC==============
+IN 10H
+
+START: 	LXI H,0A00H	;ACCUMULATOR IS ZERO
+		MVI C,00H		;AT THE START
+INITIAL:	MVI M,10H 	
+		INX H		
+		MVI M,10H   
+		INX H
+		MVI M,10H   
+		INX H		;WE DO NOT HAVE AN OPERATION
+		MVI M,10H   	;NONE OUTPUT
+
+NEWNUM:	CALL SHOWACC	;WAIT FOR NEW NUMBERS or INCR THE ACC BUT SHOW THE ACCUMULATOR				
+		
+WAITN1:	CALL KIND		;CALLS INTERNALLY DCD AND STDM 
+		CPI 83H		;if we select to incr the acc
+		JZ INCRACC	;B HAS THE RESULT IN HEX
+		CPI 81H		;IF WE SELECT TO ZERO THE ACC
+		JZ ZEROACC
+		JMP ISNUM
+
+ZEROACC: 	MVI C,00H
+		CALL SHOWACC
+		JMP WAITN1
+
+INCRACC: 	MOV A,B		;A=RESULT IN HEX
+		ADD C		;A=(ACC+RESULT)MOD 256
+		MOV C,A		;SAVE A IN C
+		CALL SHOWACC
+		JMP WAITN1
+
+ISNUM:	CPI 10H		;IF IS NUMBER THEN A< 16DEC AND CARRY BECOMES 1
+		JNC WAITN1	;ELSE WAIT AGAIN FOR N1
+		STA 0A05H		;SHOW THE FIRST NUMBER CODE==NUMBER
+		MVI A,17H		;WAIT FOR 2ND NUMBER
+		STA 0A04H 	;2ND NUMBER MUST BE NONE
+		CALL SHOWIT
+		
+WAITN2:  	CALL KIND		;WAIT FOR SECOND NUMBER
+		CPI 10H		;IF IS NUMBER THEN A< 16DEC AND CARRY BECOMES 1
+		JNC WAITN2	;ELSE WAIT AGAIN FOR N2
+		STA 0A04H		;SHOW THE FIRST NUMBER 		
+		CALL SHOWIT
+
+WAITOP:  	CALL KIND		;WAIT FOR THE OPERATOR
+		CPI 0AH		; A MEANS SUM
+		JZ SUMING
+		CPI 0FH		;F MEANS MULTIPLICATION
+		JZ MULTIP		
+		JMP WAITOP	;ELSE CHECK AGAIN FOR OPERATOR
+
+SUMING:	MVI A,00H		;A=0
+		LXI H,0A04H	;(HL)=2ND NUM
+		ADD M
+		INX	H		;(HL) = 1ST NUM
+		ADD M		;A=NUM1 + NUM2
+		MOV B,A		; B=RESULT
+		CALL HEXTODEC	;SHOW THE RESULT
+		JMP AGAIN
+
+MULTIP:	LDA 0A05H
+		MOV D,A		;SAVE THE FIRST NUM IN D
+		LDA 0A04H
+		MOV E,A		;SAVE THE 2ND NUM IN E
+		MVI B,00H		;RESULT=0
+
+DOTHEM:	MOV A,E		
+		CPI 00H		;IF E=0 THEN OVER
+		JZ ENDMULT
+		MOV A,B		;A=PREVIOUS RESULT
+		ADD D		;A=A+NUM1
+		MOV B,A		;SAVE RESULT
+		DCR E
+		JMP DOTHEM
+ENDMULT:	CALL HEXTODEC	;SHOW THE RESULT	
+		
+AGAIN:	JMP NEWNUM	;CONTINUOUS FUNCTIONALITY
+
+SHOWIT:	LXI D,0A00H
+		CALL STDM		;USE THE DISPLAY ROUTINES
+		CALL DCD
+RET
+
+HEXTODEC: 
+
+		MOV A,B		;A=RESULT
+		LXI H,0A02H	;HL=HUNDREADS
+		MVI M,00H		;HUNDREADS = 0 INITIAL
+
+HUNDREADS:
+		CPI	64H 		; NUM < 100 => CARRY BECOMES 1
+		JC DECADES
+		INR M		;(HUNDREADS)++
+		SUI 64H		;A=A-100DEC
+		JMP HUNDREADS	
+
+DECADES:   			; A IS < 100DEC OF COURSE NOW
+		DCX	H		; HL SHOW DECADES (0A01H)
+		MVI M,00H	 	;M=DECADES = 0
+FINDDEC:	CPI 0AH 		;IF NUM < 10 THEN CARRY BECOMES 1
+		JC DECUNITSOK
+		INR M		;DEC ++
+		SUI 0AH 		;NUM = NUM -10
+		JMP FINDDEC
+
+DECUNITSOK: 			;A HAS THE UNITS NOW
+		DCX	H		;HL=UNITS (0A00H)
+		MOV M,A		;SHOW THE UNITS TO THE RIGHT POSITION
+		MOV A,C		;C IS THE ACCUMULATOR
+		ANI 0FH		;THE 4 LSBS
+		STA 0A04H 	;2ND HEX DIGIT
+		MOV A,C
+		ANI F0H		;THE 4 MSBS
+		STA 0A05H		;1ST HEX DIGIT
+		CALL SHOWIT
+RET
+
+SHOWACC:	MOV A,C		;A=ACC
+		ANI 0FH		;TAKE THE 4 LSBS
+		STA	0A04H
+		MOV A,C
+		ANI F0H		;THE SAME WITH 4 MSBS
+		RRC
+		RRC
+		RRC
+		RRC
+		STA 0A05H 
+		CALL SHOWIT
+RET
+;=================================================================================
+
+
+
+
+
+
+
+
