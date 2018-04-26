@@ -1,0 +1,73 @@
+ 
+.include "m16def.inc"
+.org 0x00
+.def reg= r16
+.def temp= r17
+.def digits =r18
+.def counter= r19
+.def result =r21
+    ldi reg,LOW(RAMEND)
+	out SPL,reg
+	ldi reg,HIGH(RAMEND)
+	out SPH,reg
+	clr reg
+	out DDRC,reg
+	ser reg
+	out DDRD,reg
+
+start:
+	in reg,PINC
+	mov temp,reg
+	andi reg,0b00001111
+	andi temp,0b11110000
+	lsr temp
+	lsr temp
+	lsr temp
+	lsr temp
+	add reg,temp
+
+	clr temp
+dek:
+	cpi reg,10
+	brlo mon
+	inc temp
+	subi reg,10
+	rjmp dek
+mon:
+	lsl temp
+	lsl temp
+	lsl temp
+	lsl temp
+	or reg,temp
+
+	out PORTD,reg
+
+	
+
+
+	
+	
+	rjmp start
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
+	
+
+	
+
+	
+
+

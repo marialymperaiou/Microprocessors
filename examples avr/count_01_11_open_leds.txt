@@ -1,0 +1,80 @@
+/*
+ * project.asm
+ *
+ *  Created: 22/9/2015 12:24:41 ??
+ *   Author: Maria
+ */ 
+.include "m16def.inc"
+.org 0x00
+.def reg= r16
+.def temp= r17
+.def digits =r18
+.def counter= r19
+.def result =r21
+    ldi reg,LOW(RAMEND)
+	out SPL,reg
+	ldi reg,HIGH(RAMEND)
+	out SPH,reg
+	clr reg
+	out DDRA,reg
+	ser reg
+	out DDRB,reg
+
+start:
+	ldi digits,7
+	in reg,PINA
+next:
+	mov temp,reg
+	andi temp,0x03
+	cpi temp,0b00000001
+	brne one_one
+	inc counter
+	jmp no_add
+one_one:
+	cpi temp,0b00000011
+	brne no_add
+	inc counter
+no_add:
+	lsr reg
+	dec digits
+	brne next
+
+	ldi result,0
+	ldi temp,1
+	cpi counter,0
+	breq output
+again:
+	or result,temp
+	lsl temp
+	dec counter
+	brne again
+output:
+	out PORTB,result
+
+
+	
+	
+	rjmp start
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
+	
+
+	
+
+	
+
+

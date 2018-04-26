@@ -1,0 +1,102 @@
+
+.include "m16def.inc"
+.org 0x00
+.def reg= r16
+.def temp= r17
+.def x0 =r18
+.def x1 =r19
+.def x2 = r20
+.def x3 = r21
+.def result =r22
+    ldi reg,LOW(RAMEND)
+	out SPL,reg
+	ldi reg,HIGH(RAMEND)
+	out SPH,reg
+	clr reg
+	out DDRA,reg
+	ser reg
+	out DDRB,reg
+
+start:
+	ldi result,0
+	in reg,PINA
+	andi reg,0b00000111
+	mov temp,reg
+	andi temp,0b00000100
+	andi reg,0b00000011
+	cpi temp,0
+	breq LSB
+	jmp MSB
+
+LSB:
+	ldi temp,1
+	cpi reg,0
+	breq output
+again:
+	or result,temp
+	lsl temp
+	dec reg
+	brne again
+	jmp output
+
+MSB:
+	ldi temp,0x80
+	cpi reg,0
+	breq output
+again1:
+	or result,temp
+	lsr temp
+	dec reg
+	brne again1
+
+output:
+	out PORTC,result
+	
+	rjmp start
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
+	
+
+	
+
+	
+
+
+
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
+	
+
+	
+
+	
+
+

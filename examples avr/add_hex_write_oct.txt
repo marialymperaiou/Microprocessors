@@ -1,0 +1,86 @@
+.include "m16def.inc"
+.org 0x00
+.def reg= r16
+.def temp= r17
+.def digits =r18
+.def temp2 =r19
+.def x2 = r20
+.def result =r21
+    ldi reg,LOW(RAMEND)
+	out SPL,reg
+	ldi reg,HIGH(RAMEND)
+	out SPH,reg
+	clr reg
+	out DDRA,reg
+	clr reg
+	out DDRB,reg
+	ser reg
+	out DDRC,reg
+
+start:
+	ldi result,0
+	in reg,PINA
+	mov temp,reg
+	andi temp,0xf0
+	lsr temp
+	lsr temp
+	lsr temp
+	lsr temp
+	add result,temp
+	mov temp,reg
+	andi temp,0x0f
+	add result,temp
+
+	in reg,PINB
+	mov temp,reg
+	andi temp,0xf0
+	lsr temp
+	lsr temp
+	lsr temp
+	lsr temp
+	add result,temp
+	mov temp,reg
+	andi temp,0x0f
+	add result,temp
+
+
+	
+	clr temp
+dek:
+	cpi result,8
+	brlo mon
+	inc temp
+	subi result,8
+	rjmp dek
+mon:
+	lsl temp
+	lsl temp
+	lsl temp
+	lsl temp
+	or result,temp
+
+	out PORTC,result
+	rjmp start
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
+	
+
+	
+
+	
+
+
